@@ -1,10 +1,9 @@
-/* Base page colors and typeface. */
+
 body {
     background: #636B2F;
     font-family: Helvetica, sans-serif;
 }
 
-/* Center and color the main page heading. */
 h1 {
     color: #D4DE95;
     text-align: center;
