@@ -1,12 +1,15 @@
 [package]
+# Root web-server application and its build metadata.
 name = "tda"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# Axum handles HTTP routing; Tokio provides the async runtime; ezrustdom is the local page tool.
 axum = "0.8.9"
 tokio = { version = "1.53.1", features = ["full"] }
 ezrustdom = { path = "ezrustdom" }
 
 [workspace]
+# Build the page tool together with the root application.
 members = ["ezrustdom"]

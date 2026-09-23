@@ -1,6 +1,8 @@
 [package]
+# Metadata for the ezrustdom library and command-line page generator.
 name = "ezrustdom"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# This crate currently uses only Rust's standard library.
