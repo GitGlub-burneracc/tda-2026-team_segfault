@@ -3,7 +3,7 @@ exposedPort: 3000
 
 containers:
   - name: web
-    image: registry.tourde.cloud/core-dumped-segmentation/web
+    image: registry.tourde.cloud/core_dumped_segmentation/web
     port: 3000
 
 build:
