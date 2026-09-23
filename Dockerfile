@@ -12,4 +12,4 @@ RUN cargo build --release
 
 EXPOSE 3000
 
-CMD ["/app/target/release/my-project"]
+CMD ["/app/target/release/tda"]
