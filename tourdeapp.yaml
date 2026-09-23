@@ -1,0 +1,11 @@
+# $schema: https://tourde.cloud/api/v2/schema
+exposedPort: 3000
+
+containers:
+  - name: web
+    image: registry.tourde.cloud/core-dumped-segmentation/web
+    port: 3000
+
+build:
+  - name: web
+    context: .
