@@ -53,6 +53,7 @@ path = "wasm.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
+ezrustdom = { path = "../../ezrustdom" }
 wasm-bindgen = "0.2"
 
 [dependencies.web-sys]

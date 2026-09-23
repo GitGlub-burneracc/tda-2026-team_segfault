@@ -11,9 +11,9 @@ use std::fs;
 
 #[tokio::main]
 async fn main() {
-    // Prepare generated pages before accepting browser requests.
+    println!("starting compile_pages()");
     compile_pages();
-
+    println!("compile_pages() finished");
     // Register the home route and embed the HTML file into the compiled binary.
     let app = Router::new()
         .route("/", get(|| async {

@@ -1,6 +1,9 @@
 use std::fs;
 use std::path::Path;
 use std::process::Command;
+use js_sys::Promise;
+use wasm_bindgen_futures::JsFuture;
+use web_sys::window;
 
 pub fn compile_pages() {
     let erd_dir = Path::new("erd");
@@ -98,4 +101,18 @@ pub fn compile_pages() {
         fs::remove_dir_all(&generated)
             .expect("failed to remove generated directory");
     }
+}
+
+pub async fn sleep(ms: u32) {
+    let promise = Promise::new(&mut |resolve, _reject| {
+        window()
+            .unwrap()
+            .set_timeout_with_callback_and_timeout_and_arguments_0(
+                &resolve,
+                ms as i32,
+            )
+            .unwrap();
+    });
+
+    JsFuture::from(promise).await.unwrap();
 }

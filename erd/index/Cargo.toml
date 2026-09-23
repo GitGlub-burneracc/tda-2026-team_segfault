@@ -1,16 +1,14 @@
 [package]
-# Metadata for building this page as a WebAssembly package.
 name = "index"
 version = "0.1.0"
 edition = "2024"
 
 [lib]
-# Use wasm.rs as the library entry file and emit a browser-loadable WASM module.
 path = "wasm.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-# wasm-bindgen connects Rust code to JavaScript; web-sys exposes browser APIs.
+ezrustdom = { path = "../../ezrustdom" }
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 js-sys = "0.3"
