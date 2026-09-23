@@ -54,7 +54,17 @@ crate-type = ["cdylib"]
 
 [dependencies]
 wasm-bindgen = "0.2"
-web-sys = "0.3"
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+    "Window",
+    "Document",
+    "Element",
+    "Response",
+]
+
+[workspace]
 "#,
     ).expect("Filesystem didnt write");
 
