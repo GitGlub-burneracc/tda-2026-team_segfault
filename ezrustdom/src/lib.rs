@@ -3,6 +3,7 @@ use js_sys::Promise;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::window;
 use wasm_bindgen::JsCast;
+use serde::de::DeserializeOwned;
 
 pub async fn sleep(ms: u32) {
     let promise = Promise::new(&mut |resolve, _reject| {
@@ -28,4 +29,19 @@ pub async fn fetch(url: &str) -> web_sys::Response {
     .unwrap()
     .dyn_into::<web_sys::Response>()
     .unwrap()
+}
+
+pub async fn fetch_json<T>(url: &str) -> T
+where
+    T: DeserializeOwned,
+{
+    let response = fetch(url).await;
+
+    let json = JsFuture::from(
+        response.json().unwrap()
+    )
+    .await
+    .unwrap();
+
+    serde_wasm_bindgen::from_value(json).unwrap()
 }
