@@ -5,25 +5,23 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use ezrustdom::compile_pages;
+
 use serde_json::json;
 use std::fs;
+mod db;
+mod funcs;
+
+
 
 #[tokio::main]
 async fn main() {
-    println!("starting compile_pages()");
-    compile_pages();
-    println!("compile_pages() finished");
-    // Register the home route and embed the HTML file into the compiled binary.
+    let pool = db::init_db().await;
+
     let app = Router::new()
         .route("/", get(|| async {
             Html(include_str!("../erd/index/html.html"))
         }))
-        .route("/api/v1/health", get(|| async {
-            Json(json!({
-                "status": "ok"
-            }))
-        }))
+        .route("/api/teamdb", get(funcs::teamdb)).with_state(pool)
         .route("/erd.css", get(|| async {
             Response::builder()
                 .header("content-type", "text/css")

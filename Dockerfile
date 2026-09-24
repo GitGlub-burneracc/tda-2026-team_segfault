@@ -10,6 +10,8 @@ COPY . .
 
 RUN cargo build --release
 
+RUN cargo run -p ezrustdom -- compile
+
 EXPOSE 3000
 
 CMD ["/app/target/release/tda"]
