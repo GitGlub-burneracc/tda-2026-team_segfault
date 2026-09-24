@@ -45,3 +45,10 @@ where
 
     serde_wasm_bindgen::from_value(json).unwrap()
 }
+
+pub async fn get_document()  -> web_sys::Document {
+    web_sys::window()
+    .unwrap()
+    .document()
+    .unwrap()
+}
