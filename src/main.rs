@@ -16,6 +16,7 @@ mod funcs;
 #[tokio::main]
 async fn main() {
     let pool = db::init_db().await;
+    db::seed_db(&pool).await;
 
     let app = Router::new()
         .route("/", get(|| async {
