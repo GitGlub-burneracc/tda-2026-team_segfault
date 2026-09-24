@@ -17,4 +17,5 @@ features = [
     "Document",
     "Element",
     "Response",
+    "console"
 ]

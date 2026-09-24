@@ -10,7 +10,7 @@ use sqlx::sqlite::SqlitePool;
 
 #[derive(serde::Serialize, sqlx::FromRow)]
 pub struct Team {
-    team_name: String,
+    name: String,
     contestants: String
 }
 

@@ -6,9 +6,10 @@ use ezrustdom as erd;
 pub fn on_start() {
     spawn_local(async {
         let document = erd::get_document().await;
-        let json = erd::fetch_json("/api/teamdb").await;
+        let json: Vec<erd::Team> = erd::fetch_json("/api/teamdb").await;
+        erd::print("im in");
         if let Some(output) = document.get_element_by_id("db_output") {
-            output.set_text_content(format!());
+            output.set_text_content(Some(format!("Hello").as_str()));
         }
     });
 }

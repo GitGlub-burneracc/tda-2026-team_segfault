@@ -8,8 +8,13 @@ pub async fn init_db() -> SqlitePool {
         .await
         .expect("Failed to create pool");
 
+    sqlx::query("DROP TABLE IF EXISTS team")
+        .execute(&pool)
+        .await
+        .unwrap();
+
     sqlx::query(
-        "CREATE TABLE IF NOT EXISTS team (
+        "CREATE TABLE team (
             name TEXT NOT NULL,
             contestants TEXT NOT NULL
         )",

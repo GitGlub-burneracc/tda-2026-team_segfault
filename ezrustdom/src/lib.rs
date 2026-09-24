@@ -2,8 +2,22 @@
 use js_sys::Promise;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::window;
+use web_sys;
 use wasm_bindgen::JsCast;
 use serde::de::DeserializeOwned;
+
+#[derive(serde::Deserialize)]
+#[derive(Debug)]
+pub struct Team {
+    name: String,
+    contestants: i32,
+}
+
+pub fn print(str: &str) {
+    web_sys::console::log_1(
+            &str.into()
+    );
+}
 
 pub async fn sleep(ms: u32) {
     let promise = Promise::new(&mut |resolve, _reject| {
@@ -36,12 +50,14 @@ where
     T: DeserializeOwned,
 {
     let response = fetch(url).await;
+    print("got res");
 
     let json = JsFuture::from(
         response.json().unwrap()
     )
     .await
     .unwrap();
+    print("got json");
 
     serde_wasm_bindgen::from_value(json).unwrap()
 }
