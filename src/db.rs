@@ -8,16 +8,25 @@ pub async fn init_db() -> SqlitePool {
         .await
         .expect("Failed to create pool");
 
-    sqlx::query("DROP TABLE IF EXISTS team")
+    sqlx::query("DROP TABLE IF EXISTS stops")
         .execute(&pool)
         .await
         .unwrap();
 
     sqlx::query(
-        "CREATE TABLE team (
-            name TEXT NOT NULL,
-            contestants TEXT NOT NULL
-        )",
+        "CREATE TABLE stops (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL CHECK (length(name) <= 255),
+        image_url TEXT CHECK (length(image_url) <= 255),
+        is_transfer BOOLEAN NOT NULL,
+        x REAL NOT NULL,
+        y REAL NOT NULL,
+        wheelchair_accessible BOOLEAN NOT NULL,
+        has_shelter BOOLEAN NOT NULL,
+        has_bench BOOLEAN NOT NULL,
+        has_ticket_machine BOOLEAN NOT NULL,
+        has_display BOOLEAN NOT NULL
+    )",
     )
     .execute(&pool)
     .await
@@ -28,7 +37,31 @@ pub async fn init_db() -> SqlitePool {
 
 pub async fn seed_db(pool: &SqlitePool) {
     sqlx::query(
-    "INSERT INTO team (name, contestants) VALUES ('Core dumped: Segmentation fault', 'Albert medved, Lukas kozmon, Patrik lazur')"
+    "INSERT INTO stops (
+        id,
+        name,
+        image_url,
+        is_transfer,
+        x,
+        y,
+        wheelchair_accessible,
+        has_shelter,
+        has_bench,
+        has_ticket_machine,
+        has_display
+    ) VALUES (
+        1,
+        'Hlavní nádraží',
+        'https://example.com/stops/main-station.jpg',
+        1,
+        420.5,
+        280.25,
+        1,
+        1,
+        1,
+        1,
+        1
+    );"
     )
     .execute(pool)
     .await
