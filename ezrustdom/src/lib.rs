@@ -4,13 +4,14 @@ use wasm_bindgen_futures::JsFuture;
 use web_sys::window;
 use web_sys;
 use wasm_bindgen::JsCast;
+use wasm_bindgen::JsValue;
 use serde::de::DeserializeOwned;
 
 #[derive(serde::Deserialize)]
 #[derive(Debug)]
 pub struct Team {
     name: String,
-    contestants: i32,
+    contestants: String,
 }
 
 pub fn print(str: &str) {
@@ -33,33 +34,39 @@ pub async fn sleep(ms: u32) {
     JsFuture::from(promise).await.unwrap();
 }
 
-pub async fn fetch(url: &str) -> web_sys::Response {
-    let window = web_sys::window().unwrap();
+pub async fn fetch(url: &str) -> Result<web_sys::Response, JsValue> {
+    let window = web_sys::window()
+        .ok_or_else(|| JsValue::from_str("Browser window is unavailable"))?;
 
-    wasm_bindgen_futures::JsFuture::from(
+    let response = wasm_bindgen_futures::JsFuture::from(
         window.fetch_with_str(url)
     )
-    .await
-    .unwrap()
-    .dyn_into::<web_sys::Response>()
-    .unwrap()
+    .await?
+    .dyn_into::<web_sys::Response>()?;
+
+    if !response.ok() {
+        return Err(JsValue::from_str(&format!(
+            "GET {url} failed: HTTP {} {}",
+            response.status(), response.status_text()
+        )));
+    }
+
+    Ok(response)
 }
 
-pub async fn fetch_json<T>(url: &str) -> T
+pub async fn fetch_json<T>(url: &str) -> Result<T, JsValue>
 where
     T: DeserializeOwned,
 {
-    let response = fetch(url).await;
-    print("got res");
+    let response = fetch(url).await?;
 
     let json = JsFuture::from(
-        response.json().unwrap()
+        response.json()?
     )
-    .await
-    .unwrap();
-    print("got json");
+    .await?;
 
-    serde_wasm_bindgen::from_value(json).unwrap()
+    serde_wasm_bindgen::from_value(json)
+        .map_err(|error| JsValue::from_str(&format!("Invalid JSON from {url}: {error}")))
 }
 
 pub async fn get_document()  -> web_sys::Document {
