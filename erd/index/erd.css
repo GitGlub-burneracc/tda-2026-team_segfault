@@ -7,4 +7,12 @@ body {
 h1 {
     color: #D4DE95;
     text-align: center;
+    font-size: 60px;
+}
+
+p {
+    color: #bac095;
+    text-align: center;
+    font-size: 30px;
+    font-weight: bold;
 }

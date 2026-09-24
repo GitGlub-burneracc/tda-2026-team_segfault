@@ -1,4 +1,4 @@
-// Starts the local web server and serves the project's main HTML page.
+
 use axum::{
     body::Body,
     response::{Html, Response},
@@ -51,12 +51,9 @@ async fn main() {
                 .unwrap()
         }));
 
-
-    // Listen only on this computer at http://127.0.0.1:3000.
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
         .await
         .unwrap();
 
-    // Keep serving requests until the server exits or encounters an error.
     axum::serve(listener, app).await.unwrap();
 }

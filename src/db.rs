@@ -28,7 +28,7 @@ pub async fn init_db() -> SqlitePool {
 
 pub async fn seed_db(pool: &SqlitePool) {
     sqlx::query(
-    "INSERT INTO team (name, contestants) VALUES ('Team Segfault', 4)"
+    "INSERT INTO team (name, contestants) VALUES ('Core dumped: Segmentation fault', 'Albert medved, Lukas kozmon, Patrik lazur')"
     )
     .execute(pool)
     .await

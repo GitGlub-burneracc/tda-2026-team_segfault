@@ -10,8 +10,8 @@ use serde::de::DeserializeOwned;
 #[derive(serde::Deserialize)]
 #[derive(Debug)]
 pub struct Team {
-    name: String,
-    contestants: String,
+    pub name: String,
+    pub contestants: String,
 }
 
 pub fn print(str: &str) {
@@ -54,19 +54,18 @@ pub async fn fetch(url: &str) -> Result<web_sys::Response, JsValue> {
     Ok(response)
 }
 
-pub async fn fetch_json<T>(url: &str) -> Result<T, JsValue>
+pub async fn fetch_json<T>(url: &str) -> T
 where
     T: DeserializeOwned,
 {
-    let response = fetch(url).await?;
+    let response = fetch(url).await.unwrap();
 
     let json = JsFuture::from(
-        response.json()?
+        response.json().unwrap()
     )
-    .await?;
+    .await.unwrap();
 
-    serde_wasm_bindgen::from_value(json)
-        .map_err(|error| JsValue::from_str(&format!("Invalid JSON from {url}: {error}")))
+    serde_wasm_bindgen::from_value(json).unwrap()
 }
 
 pub async fn get_document()  -> web_sys::Document {
