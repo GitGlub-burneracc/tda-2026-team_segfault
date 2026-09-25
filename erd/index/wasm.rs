@@ -1,15 +1,22 @@
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 use ezrustdom as erd;
+use serde;
 
+#[derive(serde::Serialize, serde::Deserialize)]
+struct Stop {
+    id: i32,
+    name: String,
+    image_url: Option<String>,
+    wheelchair_accessible: bool,
+    has_shelter: bool,
+    has_ticket_machine: bool,
+}
 #[wasm_bindgen(start)]
 pub fn on_start() {
     spawn_local(async {
         let document = erd::get_document().await;
-        let teams = erd::fetch_json::<Vec<erd::Team>>("/api/teamdb").await;
-        erd::print("im in");
-        if let Some(output) = document.get_element_by_id("db_output") {
-            output.set_text_content(Some(format!("The team of {}, Members: {}", teams[0].name, teams[0].contestants).as_str()));
-        }
+        let stops = erd::fetch_json::<Vec<Stop>>("/api/v1/stops").await;
+        let stop = erd::fetch_json::<Stop>("/api/v1/stops/2").await;
     });
 }

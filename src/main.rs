@@ -1,55 +1,30 @@
-
+use sqlx::sqlite::SqlitePool;
 use axum::{
-    body::Body,
-    response::{Html, Response},
     routing::get,
-    Json, Router,
+    Router,
+    extract::Path
 };
 
-use serde_json::json;
-use std::fs;
+use crate::shared::serve_file;
 mod db;
-mod funcs;
+mod shared;
 
 
 
 #[tokio::main]
 async fn main() {
-    let pool = db::init_db().await;
+    let pool: &'static SqlitePool =
+    Box::leak(Box::new(db::init_db().await));
     db::seed_db(&pool).await;
 
     let app = Router::new()
-        .route("/", get(|| async {
-            Html(include_str!("../erd/index/html.html"))
-        }))
-        .route("/api/teamdb", get(funcs::teamdb)).with_state(pool)
-        .route("/erd.css", get(|| async {
-            Response::builder()
-                .header("content-type", "text/css")
-                .body(Body::from(
-                    fs::read("erd/index/erd.css")
-                        .expect("failed to read erd.css"),
-                ))
-                .unwrap()
-        }))
-        .route("/wasm.js", get(|| async {
-            Response::builder()
-                .header("content-type", "text/javascript")
-                .body(Body::from(
-                    fs::read("erd/index/wasm.js")
-                        .expect("failed to read wasm.js"),
-                ))
-                .unwrap()
-        }))
-        .route("/index_bg.wasm", get(|| async {
-            Response::builder()
-                .header("content-type", "application/wasm")
-                .body(Body::from(
-                    fs::read("erd/index/wasm_bg.wasm")
-                        .expect("failed to read wasm_bg.wasm"),
-                ))
-                .unwrap()
-        }));
+        .route("/", get(|| serve_file("erd/index/html.html".to_string(), "text/html")))
+        .route("/api/v1/stops", get(|| db::get_stops(pool)))
+        .route("/api/v1/stops/{id}", get(|Path(id): Path<u32>| db::get_single_stop(pool, id)))
+        .route("/{page}/",        get(|Path(page): Path<String>| shared::serve_file(format!("erd/{page}/wasm_bg.wasm"), "text/html")))
+        .route("/{page}/erd.css", get(|Path(page): Path<String>| shared::serve_file(format!("erd/{page}/erd.css"), "text/css")))
+        .route("/{page}/wasm.js", get(|Path(page): Path<String>| shared::serve_file(format!("erd/{page}/wasm.js"), "text/javascript")))
+        .route("/{page}/bg.wasm", get(|Path(page): Path<String>| shared::serve_file(format!("erd/{page}/wasm_bg.wasm"), "application/wasm")));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
         .await
