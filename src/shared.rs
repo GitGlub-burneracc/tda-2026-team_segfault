@@ -4,6 +4,8 @@ use axum::{
 };
 use std::fs;
 
+
+
 pub async fn serve_file(path: String, content_type: &str) -> Response<Body> {
     Response::builder()
         .header("content-type", content_type)
@@ -26,3 +28,4 @@ pub fn camel_case(s: &str) -> String {
         })
         .collect::<String>()
 }
+

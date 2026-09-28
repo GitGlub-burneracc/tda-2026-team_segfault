@@ -8,9 +8,16 @@ use axum::extract::rejection::JsonRejection;
 use serde::{Deserialize, Serialize};
 use crate::shared;
 
+
+#[derive(Deserialize, Serialize, sqlx::FromRow)]
+pub struct ErrorResponse {
+    pub e: String
+}
+
+
 #[derive(Deserialize, sqlx::FromRow, Serialize)]
 pub struct Stop {
-    pub id: i32,
+    pub id: u32,
     pub name: String,
     pub lines: String,
     pub is_transfer: bool,
@@ -28,7 +35,7 @@ pub struct Stop {
 #[derive(sqlx::FromRow, Serialize, Deserialize)]
 pub struct StopResponse {
     #[serde(default)]
-    pub id: i32,
+    pub id: u32,
     pub name: String,
     pub image_url: Option<String>,
     pub wheelchair_accessible: bool,
@@ -36,10 +43,40 @@ pub struct StopResponse {
     pub has_ticket_machine: bool,
 }
 
-#[derive(Deserialize, Serialize, sqlx::FromRow)]
-pub struct ErrorResponse {
-    pub e: String
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct StopInput {
+    pub name: String,
+    pub image_url: Option<String>,
+    pub wheelchair_accessible: bool,
+    pub has_shelter: bool,
+    pub has_ticket_machine: bool,
 }
+
+impl StopInput {
+    fn validate(&self) -> Result<(), String> {
+        if self.name.is_empty() {
+            return Err("name must not be empty".to_string());
+        }
+
+        if self.name.len() > 255 {
+            return Err("name must not exceed 255 characters".to_string());
+        }
+
+        if let Some(image_url) = &self.image_url {
+            if image_url.len() > 255 {
+                return Err("image_url must not exceed 255 characters".to_string());
+            }
+
+            if !image_url.starts_with('/') {
+                return Err("image_url must be a valid relative URL".to_string());
+            }
+        }
+
+        Ok(())
+    }
+}
+
 
 pub async fn init_db() -> SqlitePool {
     let pool = SqlitePoolOptions::new()
@@ -84,7 +121,7 @@ pub async fn seed_db(pool: &SqlitePool) {
         let stop: Stop = result.unwrap();
 
         let image_url = format!(
-            "assets/stopsImages/{}.png",
+            "/assets/stopsImages/{}.png",
             shared::camel_case(&stop.name)
         );
 
@@ -137,7 +174,24 @@ pub async fn get_stops(pool: &SqlitePool) -> Json<Vec<StopResponse>> {
 
     Json(stops)
 }
-pub async fn get_single_stop(pool: &SqlitePool, id: u32) -> Result<(StatusCode, Json<StopResponse>), (StatusCode, Json<ErrorResponse>)> {
+
+pub fn check_id(strid: String) -> Result<u32, (StatusCode, Json<ErrorResponse>)> {
+    let id: u32 = match strid.parse() {
+        Ok(id) if id > 0 => id,
+        _ => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse {
+                    e: "invalid stop id".to_string(),
+                }),
+            ));
+        }
+    };
+    Ok(id)
+}
+
+pub async fn get_single_stop(pool: &SqlitePool, id: String) -> Result<(StatusCode, Json<StopResponse>), (StatusCode, Json<ErrorResponse>)> {
+    let id = check_id(id)?;
     let stop = sqlx::query_as::<_, StopResponse>(
         "SELECT id, name, image_url, wheelchair_accessible, has_shelter, has_ticket_machine FROM stops WHERE id = ?"
     )
@@ -152,8 +206,34 @@ pub async fn get_single_stop(pool: &SqlitePool, id: u32) -> Result<(StatusCode, 
     }
 }
 
-pub async fn create_stop(pool: &SqlitePool, input: Result<Json<StopResponse>, JsonRejection>) -> Result<(StatusCode, Json<StopResponse>), (StatusCode, Json<ErrorResponse>)> {
-    let mut stop = match input {Ok(input) => input,Err(error) => {return Err((StatusCode::BAD_REQUEST,Json(ErrorResponse {e: error.to_string(),}),));}};
+fn parse_stop_input(
+    input: Result<Json<StopInput>, JsonRejection>,
+) -> Result<StopInput, (StatusCode, Json<ErrorResponse>)> {
+    let Json(stop) = match input {
+        Ok(input) => input,
+        Err(error) => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse {
+                    e: error.to_string(),
+                }),
+            ));
+        }
+    };
+
+    if let Err(error) = stop.validate() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse { e: error }),
+        ));
+    }
+
+    Ok(stop)
+}
+
+pub async fn create_stop(pool: &SqlitePool, input: Result<Json<StopInput>, JsonRejection>) -> Result<(StatusCode, Json<StopResponse>), (StatusCode, Json<ErrorResponse>)> {
+    let stop = parse_stop_input(input)?;
+
     let result = sqlx::query(
         "INSERT INTO stops (
             name,
@@ -171,12 +251,22 @@ pub async fn create_stop(pool: &SqlitePool, input: Result<Json<StopResponse>, Js
         .execute(pool)
         .await
         .unwrap();
-    stop.id = result.last_insert_rowid() as i32;
-    Ok((StatusCode::CREATED, stop))
+
+    let stop = StopResponse {
+        id: result.last_insert_rowid() as u32,
+        name: stop.name,
+        image_url: stop.image_url,
+        wheelchair_accessible: stop.wheelchair_accessible,
+        has_shelter: stop.has_shelter,
+        has_ticket_machine: stop.has_ticket_machine,
+    };
+
+    Ok((StatusCode::CREATED, Json(stop)))
 }
 
-pub async fn update_stop(pool: &SqlitePool, id: u32, input: Result<Json<StopResponse>, JsonRejection>) -> Result<(StatusCode, Json<StopResponse>), (StatusCode, Json<ErrorResponse>)> {
-    let mut stop = match input {Ok(input) => input,Err(error) => {return Err((StatusCode::BAD_REQUEST,Json(ErrorResponse {e: error.to_string(),}),));}};
+pub async fn update_stop(pool: &SqlitePool, id: String, input: Result<Json<StopInput>, JsonRejection>) -> Result<(StatusCode, Json<StopResponse>), (StatusCode, Json<ErrorResponse>)> {
+    let id = check_id(id)?;
+    let stop = parse_stop_input(input)?;
 
     let result = sqlx::query(
         "UPDATE stops SET
@@ -206,12 +296,21 @@ pub async fn update_stop(pool: &SqlitePool, id: u32, input: Result<Json<StopResp
         ));
     }
 
-    stop.id = id as i32;
+    let stop = StopResponse {
+        id: id,
+        name: stop.name,
+        image_url: stop.image_url,
+        wheelchair_accessible: stop.wheelchair_accessible,
+        has_shelter: stop.has_shelter,
+        has_ticket_machine: stop.has_ticket_machine,
+    };
 
-    Ok((StatusCode::OK, stop))
+
+    Ok((StatusCode::OK, Json(stop)))
 }
 
-pub async fn delete_stop(pool: &SqlitePool, id: u32) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+pub async fn delete_stop(pool: &SqlitePool, id: String) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    let id = check_id(id)?;
     let result = sqlx::query(
         "DELETE FROM stops
          WHERE id = ?"
