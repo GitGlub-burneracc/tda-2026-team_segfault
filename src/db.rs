@@ -137,16 +137,19 @@ pub async fn get_stops(pool: &SqlitePool) -> Json<Vec<StopResponse>> {
 
     Json(stops)
 }
-pub async fn get_single_stop(pool: &SqlitePool, id: u32) -> Json<StopResponse> {
-    let stops = sqlx::query_as::<_, StopResponse>(
+pub async fn get_single_stop(pool: &SqlitePool, id: u32) -> Result<(StatusCode, Json<StopResponse>), (StatusCode, Json<ErrorResponse>)> {
+    let stop = sqlx::query_as::<_, StopResponse>(
         "SELECT id, name, image_url, wheelchair_accessible, has_shelter, has_ticket_machine FROM stops WHERE id = ?"
     )
     .bind(id)
-    .fetch_one(pool)
+    .fetch_optional(pool)
     .await
     .unwrap();
 
-    Json(stops)
+    match stop {
+        Some(stop) => Ok((StatusCode::OK, Json(stop))),
+        None => Err((StatusCode::NOT_FOUND, Json(ErrorResponse{e: format!("stop with id {id} not found")})))
+    }
 }
 
 pub async fn create_stop(pool: &SqlitePool, input: Result<Json<StopResponse>, JsonRejection>) -> Result<(StatusCode, Json<StopResponse>), (StatusCode, Json<ErrorResponse>)> {
