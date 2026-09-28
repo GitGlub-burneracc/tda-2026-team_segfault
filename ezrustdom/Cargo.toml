@@ -17,5 +17,8 @@ features = [
     "Document",
     "Element",
     "Response",
-    "console"
+    "console",
+    "Request",
+    "RequestInit",
+    "Headers",
 ]
