@@ -11,7 +11,7 @@ use crate::shared;
 
 #[derive(Deserialize, Serialize, sqlx::FromRow)]
 pub struct ErrorResponse {
-    pub e: String
+    pub error: String
 }
 
 
@@ -182,7 +182,7 @@ pub fn check_id(strid: String) -> Result<u32, (StatusCode, Json<ErrorResponse>)>
             return Err((
                 StatusCode::BAD_REQUEST,
                 Json(ErrorResponse {
-                    e: "invalid stop id".to_string(),
+                    error: "invalid stop id".to_string(),
                 }),
             ));
         }
@@ -202,7 +202,7 @@ pub async fn get_single_stop(pool: &SqlitePool, id: String) -> Result<(StatusCod
 
     match stop {
         Some(stop) => Ok((StatusCode::OK, Json(stop))),
-        None => Err((StatusCode::NOT_FOUND, Json(ErrorResponse{e: format!("stop with id {id} not found")})))
+        None => Err((StatusCode::NOT_FOUND, Json(ErrorResponse{error: format!("stop with id {id} not found")})))
     }
 }
 
@@ -215,7 +215,7 @@ fn parse_stop_input(
             return Err((
                 StatusCode::BAD_REQUEST,
                 Json(ErrorResponse {
-                    e: error.to_string(),
+                    error: error.to_string(),
                 }),
             ));
         }
@@ -224,7 +224,7 @@ fn parse_stop_input(
     if let Err(error) = stop.validate() {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { e: error }),
+            Json(ErrorResponse { error }),
         ));
     }
 
@@ -291,7 +291,7 @@ pub async fn update_stop(pool: &SqlitePool, id: String, input: Result<Json<StopI
         return Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse {
-                e: format!("stop with id {id} not found"),
+                error: format!("stop with id {id} not found"),
             }),
         ));
     }
@@ -324,7 +324,7 @@ pub async fn delete_stop(pool: &SqlitePool, id: String) -> Result<StatusCode, (S
         return Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse {
-                e: format!("stop with id {id} not found"),
+                error: format!("stop with id {id} not found"),
             }),
         ));
     }
