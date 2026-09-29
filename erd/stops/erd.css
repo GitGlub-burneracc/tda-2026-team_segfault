@@ -1,4 +1,3 @@
-
 @font-face {
     font-family: "Dosis";
     src: url("/assets/fonts/Dosis-VariableFont_wght.ttf") format("truetype");
@@ -20,4 +19,8 @@
 body.light {
     --background: #ffffff;
     --text: #1a1a1a;
+}
+
+body {
+    font-family: "Dosis";
 }

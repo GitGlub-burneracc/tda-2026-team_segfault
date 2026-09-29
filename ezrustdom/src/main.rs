@@ -26,7 +26,9 @@ fn add_page(name: &String) {
     // Write a minimal HTML document that loads the sibling stylesheet.
     fs::write(
         page_dir.join("html.html"),
-        "<!doctype html>\n<html>\n<head>\n    <link rel=\"stylesheet\" href=\"erd.css\">\n</head>\n<body>\n</body>\n</html>\n",
+        format!("<!doctype html>\n<html>\n<head>\n <script type=\"module\">
+        import init from \"/doc/{name}/wasm.js\"
+        init(\"doc/{name}/bg.wasm\");</script>  \n <link rel=\"stylesheet\" href=\"/doc/{name}/erd.css\">\n</head>\n<body>\n</body>\n</html>\n"),
     ).expect("Filesystem didnt write");
 
     // Start the stylesheet empty so the page can be styled by its author.
@@ -38,7 +40,8 @@ fn add_page(name: &String) {
     // Provide the WASM entry point that can later add browser-side behavior.
     fs::write(
         page_dir.join("wasm.rs"),
-        "use wasm_bindgen::prelude::*;\n\n#[wasm_bindgen(start)]\npub fn start() {\n}\n",
+        "use wasm_bindgen::prelude::*;\n\n#[wasm_bindgen(start)]\npub fn start() {spawn_local(async {
+    });\n}\n",
     ).expect("Filesystem didnt write");
 
     // Configure this page as a WebAssembly library with browser bindings.
@@ -67,7 +70,7 @@ features = [
 ]
 
 [workspace]
-"#,
+"#.replace("erd-page", name.as_str()),
     ).expect("Filesystem didnt write");
 
 }

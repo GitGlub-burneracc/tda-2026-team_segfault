@@ -21,7 +21,7 @@ async fn main() {
     db::seed_db(&pool).await;
 
     let app = Router::new()
-        .route("/", get(|| serve_file("erd/index/html.html".to_string(), "text/html")))
+        .route("/",                  get(|| serve_file("erd/index/html.html".to_string(), "text/html")))
         
         .route("/api/v1/stops",      get(|| db::get_stops(pool)))
         .route("/api/v1/stops",      post(move|headers: HeaderMap, input: Result<Json<db::StopInput>, JsonRejection>| async move {match shared::check_auth(&headers) {Ok(()) => db::create_stop(pool, input).await,Err(error) => { Err(error) },}}))
@@ -29,10 +29,13 @@ async fn main() {
         .route("/api/v1/stops/{id}", put(move|headers: HeaderMap, Path(id): Path<String>, input: Result<Json<db::StopInput>, JsonRejection>| async move {match shared::check_auth(&headers) {Ok(()) => db::update_stop(pool, id, input).await,Err(error) => { Err(error) },}}))
         .route("/api/v1/stops/{id}", delete(move|headers: HeaderMap, Path(id): Path<String>| async move {match shared::check_auth(&headers) {Ok(()) => db::delete_stop(pool, id).await,Err(error) => { Err(error) },}}))
         
-        .route("/{page}/",        get(|Path(page): Path<String>| shared::serve_file(format!("erd/{page}/wasm_bg.wasm"), "text/html")))
-        .route("/{page}/erd.css", get(|Path(page): Path<String>| shared::serve_file(format!("erd/{page}/erd.css"), "text/css")))
-        .route("/{page}/wasm.js", get(|Path(page): Path<String>| shared::serve_file(format!("erd/{page}/wasm.js"), "text/javascript")))
-        .route("/{page}/bg.wasm", get(|Path(page): Path<String>| shared::serve_file(format!("erd/{page}/wasm_bg.wasm"), "application/wasm")));
+        .route("/doc/{page}/erd.css",    get(|Path(page): Path<String>| shared::serve_file(format!("erd/{page}/erd.css"), "text/css")))
+        .route("/doc/{page}/wasm.js",    get(|Path(page): Path<String>| shared::serve_file(format!("erd/{page}/wasm.js"), "text/javascript")))
+        .route("/doc/{page}/bg.wasm",    get(|Path(page): Path<String>| shared::serve_file(format!("erd/{page}/wasm_bg.wasm"), "application/wasm")))
+        .route("/assets/{*path}",     get(|Path(path): Path<String>| shared::serve_asset(format!("assets/{path}"))))
+        
+        .route("/stops/{id}",        get(|| shared::serve_file("erd/stop-detail/html.html".to_string(), "text/html")))
+        .route("/{page}",           get(|Path(page): Path<String>| shared::serve_file(format!("erd/{page}/html.html"), "text/html")));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
         .await
