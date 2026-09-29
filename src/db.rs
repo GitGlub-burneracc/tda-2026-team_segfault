@@ -1,4 +1,4 @@
-use axum::http::StatusCode;
+use axum::http::{StatusCode};
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::sqlite::SqlitePool;
 use axum::{
@@ -7,12 +7,7 @@ use axum::{
 use axum::extract::rejection::JsonRejection;
 use serde::{Deserialize, Serialize};
 use crate::shared;
-
-
-#[derive(Deserialize, Serialize, sqlx::FromRow)]
-pub struct ErrorResponse {
-    pub error: String
-}
+use shared::ErrorResponse;
 
 
 #[derive(Deserialize, sqlx::FromRow, Serialize)]
@@ -164,17 +159,6 @@ pub async fn seed_db(pool: &SqlitePool) {
 
 // API FUNCTIONS
 
-pub async fn get_stops(pool: &SqlitePool) -> Json<Vec<StopResponse>> {
-    let stops = sqlx::query_as::<_, StopResponse>(
-        "SELECT id, name, image_url, wheelchair_accessible, has_shelter, has_ticket_machine FROM stops"
-    )
-    .fetch_all(pool)
-    .await
-    .unwrap();
-
-    Json(stops)
-}
-
 pub fn check_id(strid: String) -> Result<u32, (StatusCode, Json<ErrorResponse>)> {
     let id: u32 = match strid.parse() {
         Ok(id) if id > 0 => id,
@@ -190,25 +174,7 @@ pub fn check_id(strid: String) -> Result<u32, (StatusCode, Json<ErrorResponse>)>
     Ok(id)
 }
 
-pub async fn get_single_stop(pool: &SqlitePool, id: String) -> Result<(StatusCode, Json<StopResponse>), (StatusCode, Json<ErrorResponse>)> {
-    let id = check_id(id)?;
-    let stop = sqlx::query_as::<_, StopResponse>(
-        "SELECT id, name, image_url, wheelchair_accessible, has_shelter, has_ticket_machine FROM stops WHERE id = ?"
-    )
-    .bind(id)
-    .fetch_optional(pool)
-    .await
-    .unwrap();
-
-    match stop {
-        Some(stop) => Ok((StatusCode::OK, Json(stop))),
-        None => Err((StatusCode::NOT_FOUND, Json(ErrorResponse{error: format!("stop with id {id} not found")})))
-    }
-}
-
-fn parse_stop_input(
-    input: Result<Json<StopInput>, JsonRejection>,
-) -> Result<StopInput, (StatusCode, Json<ErrorResponse>)> {
+fn parse_stop_input(input: Result<Json<StopInput>, JsonRejection>) -> Result<StopInput, (StatusCode, Json<ErrorResponse>)> {
     let Json(stop) = match input {
         Ok(input) => input,
         Err(error) => {
@@ -230,6 +196,37 @@ fn parse_stop_input(
 
     Ok(stop)
 }
+
+pub async fn get_stops(pool: &SqlitePool) -> Json<Vec<StopResponse>> {
+    let stops = sqlx::query_as::<_, StopResponse>(
+        "SELECT id, name, image_url, wheelchair_accessible, has_shelter, has_ticket_machine FROM stops"
+    )
+    .fetch_all(pool)
+    .await
+    .unwrap();
+
+    Json(stops)
+}
+
+
+
+pub async fn get_single_stop(pool: &SqlitePool, id: String) -> Result<(StatusCode, Json<StopResponse>), (StatusCode, Json<ErrorResponse>)> {
+    let id = check_id(id)?;
+    let stop = sqlx::query_as::<_, StopResponse>(
+        "SELECT id, name, image_url, wheelchair_accessible, has_shelter, has_ticket_machine FROM stops WHERE id = ?"
+    )
+    .bind(id)
+    .fetch_optional(pool)
+    .await
+    .unwrap();
+
+    match stop {
+        Some(stop) => Ok((StatusCode::OK, Json(stop))),
+        None => Err((StatusCode::NOT_FOUND, Json(ErrorResponse{error: format!("stop with id {id} not found")})))
+    }
+}
+
+
 
 pub async fn create_stop(pool: &SqlitePool, input: Result<Json<StopInput>, JsonRejection>) -> Result<(StatusCode, Json<StopResponse>), (StatusCode, Json<ErrorResponse>)> {
     let stop = parse_stop_input(input)?;

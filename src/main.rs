@@ -4,6 +4,7 @@ use axum::{
     Router,
     extract::Path,
     Json, 
+    http::HeaderMap,
 };
 use axum::extract::rejection::JsonRejection;
 
@@ -22,11 +23,11 @@ async fn main() {
     let app = Router::new()
         .route("/", get(|| serve_file("erd/index/html.html".to_string(), "text/html")))
         
-        .route("/api/v1/stops", get(|| db::get_stops(pool)))
-        .route("/api/v1/stops", post(|input: Result<Json<db::StopInput>, JsonRejection>| db::create_stop(pool, input)))
+        .route("/api/v1/stops",      get(|| db::get_stops(pool)))
+        .route("/api/v1/stops",      post(move|headers: HeaderMap, input: Result<Json<db::StopInput>, JsonRejection>| async move {match shared::check_auth(&headers) {Ok(()) => db::create_stop(pool, input).await,Err(error) => { Err(error) },}}))
         .route("/api/v1/stops/{id}", get(|Path(id): Path<String>| db::get_single_stop(pool, id)))
-        .route("/api/v1/stops/{id}", put(|Path(id): Path<String>, input: Result<Json<db::StopInput>, JsonRejection>| db::update_stop(pool, id, input)))
-        .route("/api/v1/stops/{id}", delete(|Path(id): Path<String>| db::delete_stop(pool, id)))
+        .route("/api/v1/stops/{id}", put(move|headers: HeaderMap, Path(id): Path<String>, input: Result<Json<db::StopInput>, JsonRejection>| async move {match shared::check_auth(&headers) {Ok(()) => db::update_stop(pool, id, input).await,Err(error) => { Err(error) },}}))
+        .route("/api/v1/stops/{id}", delete(move|headers: HeaderMap, Path(id): Path<String>| async move {match shared::check_auth(&headers) {Ok(()) => db::delete_stop(pool, id).await,Err(error) => { Err(error) },}}))
         
         .route("/{page}/",        get(|Path(page): Path<String>| shared::serve_file(format!("erd/{page}/wasm_bg.wasm"), "text/html")))
         .route("/{page}/erd.css", get(|Path(page): Path<String>| shared::serve_file(format!("erd/{page}/erd.css"), "text/css")))

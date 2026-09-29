@@ -1,10 +1,17 @@
 use axum::{
-    body::Body,
+    Json, 
+    http::HeaderMap,
     response::Response,
+    body::Body
 };
+use serde::{Deserialize, Serialize};
 use std::fs;
+use axum::http::{header, StatusCode};
 
-
+#[derive(Deserialize, Serialize, sqlx::FromRow)]
+pub struct ErrorResponse {
+    pub error: String
+}
 
 pub async fn serve_file(path: String, content_type: &str) -> Response<Body> {
     Response::builder()
@@ -29,3 +36,23 @@ pub fn camel_case(s: &str) -> String {
         .collect::<String>()
 }
 
+pub fn check_auth(
+    headers: &HeaderMap,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let expected = "Bearer Kyqc49jIM+5+D0Sed8ZQ671gxkd7W/bBTWjDtZ0Zrgk=";
+
+    if headers
+        .get(header::AUTHORIZATION)
+        .and_then(|value| value.to_str().ok())
+        != Some(expected)
+    {
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse {
+                error: "unauthorized".to_string(),
+            }),
+        ));
+    }
+
+    Ok(())
+}

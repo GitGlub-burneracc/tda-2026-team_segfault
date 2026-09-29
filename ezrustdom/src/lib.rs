@@ -54,7 +54,7 @@ where
     serde_wasm_bindgen::from_value(json).unwrap()
 }
 
-pub async fn post(url: &str, body: String, req_type: &str) -> web_sys::Response {
+pub async fn post(url: &str, body: String, req_type: &str, headers: Option<&[(&str, &str)]>) -> web_sys::Response {
     let options = web_sys::RequestInit::new();
     options.set_method(req_type);
     options.set_body(&body.into());
@@ -66,6 +66,12 @@ pub async fn post(url: &str, body: String, req_type: &str) -> web_sys::Response 
         .headers()
         .set("Content-Type", "application/json")
         .unwrap();
+
+    if let Some(headers) = headers {
+        for (name, value) in headers {
+            request.headers().set(name, value).unwrap();
+        }
+    }
 
     fetch(request).await
 }
