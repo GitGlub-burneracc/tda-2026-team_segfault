@@ -28,7 +28,7 @@ fn add_page(name: &String) {
         page_dir.join("html.html"),
         format!("<!doctype html>\n<html>\n<head>\n <script type=\"module\">
         import init from \"/doc/{name}/wasm.js\"
-        init(\"doc/{name}/bg.wasm\");</script>  \n <link rel=\"stylesheet\" href=\"/doc/{name}/erd.css\">\n</head>\n<body>\n</body>\n</html>\n"),
+        init(\"doc/{name}/wasm_bg.wasm\");</script>  \n <link rel=\"stylesheet\" href=\"/doc/{name}/erd.css\">\n</head>\n<body>\n</body>\n</html>\n"),
     ).expect("Filesystem didnt write");
 
     // Start the stylesheet empty so the page can be styled by its author.

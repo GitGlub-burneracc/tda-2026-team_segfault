@@ -11,7 +11,7 @@ use axum::extract::rejection::JsonRejection;
 use crate::shared::serve_file;
 mod db;
 mod shared;
-
+use tower_http::services::ServeDir;
 
 
 #[tokio::main]
@@ -29,13 +29,11 @@ async fn main() {
         .route("/api/v1/stops/{id}", put(move|headers: HeaderMap, Path(id): Path<String>, input: Result<Json<db::StopInput>, JsonRejection>| async move {match shared::check_auth(&headers) {Ok(()) => db::update_stop(pool, id, input).await,Err(error) => { Err(error) },}}))
         .route("/api/v1/stops/{id}", delete(move|headers: HeaderMap, Path(id): Path<String>| async move {match shared::check_auth(&headers) {Ok(()) => db::delete_stop(pool, id).await,Err(error) => { Err(error) },}}))
         
-        .route("/doc/{page}/erd.css",    get(|Path(page): Path<String>| shared::serve_file(format!("erd/{page}/erd.css"), "text/css")))
-        .route("/doc/{page}/wasm.js",    get(|Path(page): Path<String>| shared::serve_file(format!("erd/{page}/wasm.js"), "text/javascript")))
-        .route("/doc/{page}/bg.wasm",    get(|Path(page): Path<String>| shared::serve_file(format!("erd/{page}/wasm_bg.wasm"), "application/wasm")))
-        .route("/assets/{*path}",     get(|Path(path): Path<String>| shared::serve_asset(format!("assets/{path}"))))
+        .nest_service("/assets", ServeDir::new("assets"))
+        .nest_service("/doc", ServeDir::new("erd"))
         
-        .route("/stops/{id}",        get(|| shared::serve_file("erd/stop-detail/html.html".to_string(), "text/html")))
-        .route("/{page}",           get(|Path(page): Path<String>| shared::serve_file(format!("erd/{page}/html.html"), "text/html")));
+        .route("/stops/{id}",        get(|| serve_file("erd/stop-detail/html.html".to_string(), "text/html")))
+        .route("/{page}", get(shared::serve_page));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
         .await

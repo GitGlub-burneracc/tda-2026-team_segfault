@@ -23,4 +23,10 @@ body.light {
 
 body {
     font-family: "Dosis";
+    background-color: var(--background);
+    margin: 0;
+}
+ 
+#top-bar {
+    background-color: var(--blue);
 }

@@ -11,6 +11,7 @@ serde_json = "1.0.151"
 sqlx = { version = "0.9.0", features = ["runtime-tokio", "sqlite"] }
 serde = "1.0.229"
 csv = "1.4.0"
+tower-http = { version = "0.6", features = ["fs"] }
 
 [workspace]
 members = ["ezrustdom"]

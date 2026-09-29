@@ -2,7 +2,8 @@ use axum::{
     Json, 
     http::HeaderMap,
     response::Response,
-    body::Body
+    body::Body,
+    extract::Path
 };
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -57,30 +58,15 @@ pub fn check_auth(
     Ok(())
 }
 
-pub async fn serve_asset(path: String) -> Response {
-    if path.split('/').any(|part| part == "..") {
+pub async fn serve_page(Path(page): Path<String>) -> Response {
+    let path = format!("erd/{page}/html.html");
+
+    if !std::path::Path::new(&path).is_file() {
         return Response::builder()
             .status(StatusCode::BAD_REQUEST)
             .body(Body::empty())
             .unwrap();
     }
 
-    let content_type = match path.rsplit('.').next() {
-        Some("png") => "image/png",
-        Some("jpg") | Some("jpeg") => "image/jpeg",
-        Some("svg") => "image/svg+xml",
-        Some("webp") => "image/webp",
-        Some("ico") => "image/x-icon",
-        Some("ttf") => "font/ttf",
-        Some("woff") => "font/woff",
-        Some("woff2") => "font/woff2",
-        _ => {
-            return Response::builder()
-                .status(StatusCode::NOT_FOUND)
-                .body(Body::empty())
-                .unwrap();
-        }
-    };
-
-    serve_file(format!("assets/{path}"), content_type).await
+    serve_file(path, "text/html").await
 }
