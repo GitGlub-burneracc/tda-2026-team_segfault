@@ -5,12 +5,18 @@
     font-style: normal;
 }
 
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 :root {
     --green: #91f5ad;
     --blue: #0070bb;
     --dark-blue: #0257a5;
     --background: #1a1a1a;
-    --white: #ffffff;
+    --text: #ffffff;
     --teal: #6dd4b1;
     --cyan: #49b3b4;
     --light-blue: #2592b8;
@@ -25,8 +31,79 @@ body {
     font-family: "Dosis";
     background-color: var(--background);
     margin: 0;
+    color: var(--text);
+    text-align: center;
 }
  
 #top-bar {
     background-color: var(--blue);
+    display: flex;
+}
+
+#bar-left {
+    align-self: left;
+    display: flex;
+    gap: 20px;
+    margin: 33px;
+    text-align: left;
+}
+
+#logo {
+    height: 100px;
+    width: auto;
+}
+
+#logo_text1 {
+    margin-top:9px;
+}
+
+#up-top {
+    margin: 20px;
+    font-size: xx-large;
+    font-weight: 700;
+}
+
+#card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 24px;
+    padding: 50px 16.6667vw 20px 16.6667vw;
+}
+
+.stop-card {
+    display: block;
+    overflow: hidden;
+
+    background: #2b2b2b;
+    border: 2px solid #0f0f0f;
+    border-radius: 20px;
+
+    color: var(--text);
+    text-decoration: none;
+
+    transition:
+        transform 150ms ease,
+        border-color 150ms ease;
+}
+
+.stop-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--green);
+}
+
+.stop-card img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+}
+
+.stop-card h2 {
+    padding: 16px;
+}
+
+.no-stops {
+    font-size: 100px;
+    font-weight: 800;
+    color: var(--light-blue);
 }

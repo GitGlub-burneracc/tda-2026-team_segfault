@@ -18,7 +18,7 @@ use tower_http::services::ServeDir;
 async fn main() {
     let pool: &'static SqlitePool =
     Box::leak(Box::new(db::init_db().await));
-    db::seed_db(&pool).await;
+    //db::seed_db(&pool).await;
 
     let app = Router::new()
         .route("/",                  get(|| serve_file("erd/index/html.html".to_string(), "text/html")))
